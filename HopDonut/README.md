@@ -1,2 +1,0 @@
-# HopDonut Pygame 🍩
-

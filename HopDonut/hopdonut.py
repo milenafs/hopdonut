@@ -1,8 +1,9 @@
-# programa simples de jogo
 '''
-No unix - linux  fim de linha \n
-DOs - Windows    fim de linha \r\n
+Grupo:
+Isabela Clementino Ponciano Ferreira - 20138
+Milena Furuta Shishito - 20148
 '''
+
 import random
 import time
 import os
@@ -11,34 +12,51 @@ from pygame.locals import(
 
 import pygame as pg
 
+#Tamanho tela do jogo
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 525
+
+#contadores de inimgos, cenouras e tempo
 cnt_enemy = 0
 cnt_food = 0
-
-transparent = (0, 0, 0, 0)
 counter, text = 100, '100'.rjust(1)
 
 #criando cores no python
 white = (255,255,255)
 BLACK = (0,0,0)
+
 pg.init()
+
+#timer
 clock = pg.time.Clock()
 pg.time.set_timer(pg.USEREVENT, 1000)
 
 # criando fontes para escrever na tela
 font = pg.font.SysFont("Verdana",20)
-font_small = pg.font.SysFont("Verdana",20)
-jogo_str = font.render("Donut War II", True, BLACK)
 
+#Criação da tela
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.RESIZABLE )
 posx = 100
 posy = 100
-
 pg.display.set_caption("HopDonut")
+
+#Dados que vão ser mostrados ao final do jogo
 qtdFood = 0
 qtdDonuts = 0
 
+#Sons
+somJogo = pg.mixer.Sound('sounds/songgame.wav')
+comeuCenoura = pg.mixer.Sound('sounds/comeuCenoura.wav')
+perderVida = pg.mixer.Sound('sounds/perderVida.wav')
+shot = pg.mixer.Sound('sounds/shot.wav')
+comeuCenoura.set_volume(0.5)
+somGanhou = pg.mixer.Sound('sounds/ganhou.wav')
+somPerdeu = pg.mixer.Sound('sounds/GameOver.wav')
+somMenu = pg.mixer.Sound('sounds/songmenu.wav')
+somTutorial = pg.mixer.Sound('sounds/tutorial.wav')
+
+
+#Classes que usamos 
 class Tiro(pg.sprite.Sprite):
     def __init__(self, player):
         super(Tiro, self).__init__()
@@ -117,7 +135,6 @@ class Food(pg.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.surf, self.rect)
 
-# definindo sprites
 class Player(pg.sprite.Sprite):
     def __init__(self):
         super(Player, self).__init__()
@@ -153,13 +170,17 @@ class Player(pg.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.surf, self.rect)
 
-def jogar():
 
+#Método para jogar 
+def jogar():
+    #zera as variavéis que usamos ao longo do jogo
     qtdFood = 0
     qtdVida = 5
     qtdDonuts = 0
-
+    
+    #timer
     counter, text = 100, '100'.rjust(1)
+    
     # criar um novo evento
     ADDENEMY = pg.USEREVENT + 1
     pg.time.set_timer(ADDENEMY,1000)
@@ -168,17 +189,14 @@ def jogar():
     ADDFOOD = pg.USEREVENT + 2
     pg.time.set_timer(ADDFOOD,1200)
 
-    #musica de fundo
-    pg.mixer.music.load('sounds/songgame.wav')
-    pg.mixer.music.play()
-    pg.mixer.music.set_volume(0.3)
-
-    comeuCenoura = pg.mixer.Sound('sounds/comeuCenoura.wav')
-    #gameOver = pg.mixer.Sound('sounds/GameOver.wav')
-    perderVida = pg.mixer.Sound('sounds/perderVida.wav')
-    #ganhou =  pg.mixer.Sound('sounds/ganhou.wav')
-    shot = pg.mixer.Sound('sounds/shot.wav')
-    comeuCenoura.set_volume(0.5)
+    #Paramos possíveis sons antigos
+    pg.mixer.Sound.stop(somMenu)
+    pg.mixer.Sound.stop(somGanhou)
+    pg.mixer.Sound.stop(somPerdeu)
+    
+    #Sound de fundo
+    pg.mixer.Sound.play(somJogo)
+    pg.mixer.Sound.set_volume(somJogo,0.3)
 
     player = Player()
 
@@ -199,67 +217,70 @@ def jogar():
             # verifico qual tecla apertada 
                 if event.key == K_ESCAPE:
                     running = False
-                if event.key == K_SPACE:
+                if event.key == K_SPACE: #Atirou
                     new_tiro = Tiro(player)
                     tiros.add(new_tiro)
                     all_sprites.add(tiros)
                     pg.mixer.Sound.play(shot)
+                    pg.mixer.Sound.set_volume(shot,0.7)                  
             elif event.type == pg.QUIT:
                 running = False        
-            elif event.type == ADDENEMY:
-                # crio um novo inimigo
+            elif event.type == ADDENEMY: # crio um novo inimigo
                 new_enemy = Enemy()
                 enemies.add(new_enemy)
                 all_sprites.add(new_enemy) 
-            elif event.type == ADDFOOD:
-                # crio um novo food
+            elif event.type == ADDFOOD: # crio um novo food
                 new_food = Food()
                 foods.add(new_food)
                 all_sprites.add(new_food)
             elif event.type == pg.USEREVENT: 
                 counter -= 1
                 text = str(counter).rjust(1) 
-                if counter == 0:
+                if counter == 0: #Acabou o tempo e jogador não perdeu
                     abrirtelaVenceu(qtdDonuts,qtdFood, counter)
+                
+        #Tela de fundo
         keyp = pg.key.get_pressed()
         screen.fill(white)
         background = pg.image.load("img/bk.jpeg")
-        back = pg.transform.scale(background, (800,525))
-                    
-        screen.blit(back, [0, 0]) 
+        back = pg.transform.scale(background, (800,525))                 
+        screen.blit(back, [0, 0])
+        
         text = str(counter).rjust(1)      
         screen.blit(font.render(text, True, (0, 0, 0)), (760, 10))
         relogio = pg.image.load("img/timer.png")
         relogio = pg.transform.scale(relogio, (35,35))
         screen.blit(relogio,(730,5))        
         all_sprites.update(keyp)
+        #Atualiza a quantidade de corações na tela
         atualizarVida(qtdVida,qtdDonuts,qtdFood, counter)  
         
         for inimigo in enemies:
             if pg.sprite.spritecollideany(inimigo, tiros):
                 for tiro in tiros:
                     if pg.sprite.spritecollideany(tiro, enemies):
-                        qtdDonuts = qtdDonuts + 1
+                        qtdDonuts = qtdDonuts + 1 #Destruiu um donut
                         tiro.kill()
                         inimigo.kill()
             if pg.sprite.collide_rect(inimigo, player):
-                qtdVida= qtdVida - 1
+                qtdVida= qtdVida - 1 #personagem colidiu com um donut
                 atualizarVida(qtdVida,qtdDonuts,qtdFood, counter)
-                inimigo.kill() 
+                inimigo.kill()
                 pg.mixer.Sound.play(perderVida)
+                
         
-        #som explosÃ£o/baque
         for food in foods: 
             if pg.sprite.spritecollideany(food, tiros): #tiro matou a comida
                 for tiro in tiros:
                     if pg.sprite.spritecollideany(tiro, foods):
                         tiro.kill()
                         food.kill()       
-            if pg.sprite.collide_rect(food, player):
+            if pg.sprite.collide_rect(food, player): #Coletou a cenoura/food
                 qtdFood = qtdFood + 1
-                food.kill() 
+                food.kill()
                 pg.mixer.Sound.play(comeuCenoura)
-
+                
+        #Desenha as sprites        
         for entity in all_sprites:
             entity.draw(screen)
         
@@ -267,10 +288,13 @@ def jogar():
         clock.tick(60)
     pg.quit()
 
-def atualizarVida(qtdVidas,qtdDonutsPegou,qtdFoodPegou, counterTempo): 
-    if qtdVidas == 0:  #morreu
-        abrirtelaPerdeu(qtdDonutsPegou,qtdFoodPegou, counterTempo)
 
+
+def atualizarVida(qtdVidas,qtdDonutsPegou,qtdFoodPegou, counterTempo): 
+    if qtdVidas == 0:  #morreu, está sem vidas
+        abrirtelaPerdeu(qtdDonutsPegou,qtdFoodPegou, counterTempo)
+    
+    #Vai desenhando os corações de acordo com a qtdVidas
     aux = 0
     while (aux <= qtdVidas):
         if(aux == 5):
@@ -297,32 +321,36 @@ def atualizarVida(qtdVidas,qtdDonutsPegou,qtdFoodPegou, counterTempo):
         
         #pg.display.flip()
 
+
+
 def abrirtelaVenceu(qtdDonutsPegou,qtdFoodPegou, counterTempo):
-    pg.mixer.music.stop()
-    pg.mixer.music.load('sounds/ganhou.wav')
-    pg.mixer.music.play()
+    # Para sons antigos
+    pg.mixer.Sound.stop(somJogo)
+    #Música tela vitória
+    pg.mixer.Sound.play(somGanhou)
+    #Imagem fundo
     background = pg.image.load("img/telaVenceu.png")
     back = pg.transform.scale(background, (800,525))
     screen.blit(back, [0, 0])
     pg.display.flip()   
 
-    #colocar os textos
+    #colocar os textos no espaço correto
     tempoJogo = 100 - counterTempo
-    txtTempo=str(tempoJogo).rjust(1)                          ##### armazena o texto
+    txtTempo=str(tempoJogo).rjust(1)                          
     txtDonuts = str(qtdDonutsPegou)
     txtFood = str(qtdFoodPegou)
-
-    pg.font.init()                                     ##### inicia font
-    fonte=pg.font.get_default_font()                   ##### carrega com a fonte padrÃ£o
-    fontesys=pg.font.SysFont("Verdanda", 50)           ##### usa a fonte padrÃ£o
-    txttela = fontesys.render(txtTempo, 1, (0,0,0))   ##### renderiza o texto na cor desejada
+    pg.font.init()                                     
+    fonte=pg.font.get_default_font()                   
+    fontesys=pg.font.SysFont("Verdanda", 50)           
+    txttela = fontesys.render(txtTempo, 1, (0,0,0))   
     txttela2 = fontesys.render(txtDonuts, 1, (0,0,0))
     txttela3 = fontesys.render(txtFood, 1, (0,0,0))
-    screen.blit(txttela,(95,250))                       ##### coloca na posiÃ§Ã£o 50,900 (tela FHD)
+    screen.blit(txttela,(95,250))                       
     screen.blit(txttela2,(360,250))  
     screen.blit(txttela3,(610,250))  
-    pg.display.update()                                ##### CARREGA A TELA E EXIBE
+    pg.display.update()                               
 
+    # Vẽ opção escolhida
     naoclicou = True
     while (naoclicou):
         for event in pg.event.get():
@@ -332,35 +360,39 @@ def abrirtelaVenceu(qtdDonutsPegou,qtdFoodPegou, counterTempo):
                 x, y= event.pos
                 if x > 180 and x < 299 and y > 411 and y < 470: #SIM 
                    jogar()
-                if x > 493 and x < 619 and y > 411 and y < 470: #NÃƒO
+                if x > 493 and x < 619 and y > 411 and y < 470: #NÃO
                    abrirtelainicial()
 
+
+
+
 def abrirtelaPerdeu(qtdDonutsPegou,qtdFoodPegou, counterTempo):
-    pg.mixer.music.stop()
-    pg.mixer.music.load('sounds/GameOver.wav')
-    pg.mixer.music.play()
+    #Para som antigo
+    pg.mixer.Sound.stop(somJogo)
+    #Som de fundo
+    pg.mixer.Sound.play(somPerdeu)
+    #Fundo
     background = pg.image.load("img/telaPerdeu.png")
     back = pg.transform.scale(background, (800,525))
     screen.blit(back, [0, 0])
     pg.display.flip()   
-
-     #colocar os textos
+    #colocar os textos
     tempoJogo = 100 - counterTempo
-    txtTempo=str(tempoJogo).rjust(1)                          ##### armazena o texto
+    txtTempo=str(tempoJogo).rjust(1)                          
     txtDonuts = str(qtdDonutsPegou)
     txtFood = str(qtdFoodPegou)
-
-    pg.font.init()                                     ##### inicia font
-    fonte=pg.font.get_default_font()                   ##### carrega com a fonte padrÃ£o
-    fontesys=pg.font.SysFont("Verdanda", 50)           ##### usa a fonte padrÃ£o
-    txttela = fontesys.render(txtTempo, 1, (0,0,0))   ##### renderiza o texto na cor desejada
+    pg.init()                                     
+    fonte=pg.font.get_default_font()                   
+    fontesys=pg.font.SysFont("Verdanda", 50)           
+    txttela = fontesys.render(txtTempo, 1, (0,0,0))   
     txttela2 = fontesys.render(txtDonuts, 1, (0,0,0))
     txttela3 = fontesys.render(txtFood, 1, (0,0,0))
-    screen.blit(txttela,(95,250))                       ##### coloca na posiÃ§Ã£o 50,900 (tela FHD)
+    screen.blit(txttela,(95,250))                       
     screen.blit(txttela2,(360,250))  
     screen.blit(txttela3,(610,250))  
-    pg.display.update()                                ##### CARREGA A TELA E EXIBE
+    pg.display.update()                                
 
+    #Vê a escolha do jogador
     naoclicou = True
     while (naoclicou):
         for event in pg.event.get():
@@ -370,17 +402,25 @@ def abrirtelaPerdeu(qtdDonutsPegou,qtdFoodPegou, counterTempo):
                 x, y= event.pos
                 if x > 180 and x < 299 and y > 411 and y < 470: #SIM
                    jogar()
-                if x > 493 and x < 619 and y > 411 and y < 470: #NÃƒO
+                if x > 493 and x < 619 and y > 411 and y < 470: #NÃO
                    abrirtelainicial()
 
+
+
 def abrirtelainicial():
-    pg.mixer.music.load('sounds/songmenu.wav')
-    pg.mixer.music.play()
-    pg.mixer.music.set_volume(0.3)
+    #Para sons antigos
+    pg.mixer.Sound.stop(somGanhou)
+    pg.mixer.Sound.stop(somPerdeu)
+    pg.mixer.Sound.stop(somTutorial)
+    #Música para a tela munu
+    pg.mixer.Sound.play(somMenu)
+    pg.mixer.Sound.set_volume(somMenu,0.3)
+    #Imagem de fundo
     background = pg.image.load("img/HopDonut.png")
     back = pg.transform.scale(background, (800,525))
     screen.blit(back, [0, 0])
     pg.display.flip()
+    #Vê a opção que foi escolhida
     running = True
     while (running):
         for event in pg.event.get():
@@ -395,14 +435,19 @@ def abrirtelainicial():
                 elif x > 552 and x < 749 and  y > 158 and y < 300: # Clicou no tutorial
                     abrirtelatutorial()
 
+
 def abrirtelatutorial():
-    pg.mixer.music.load('sounds/tutorial.wav')
-    pg.mixer.music.play()
-    pg.mixer.music.set_volume(0.3)
+    #Para música antiga
+    pg.mixer.Sound.stop(somMenu)
+    #Começa música da tela
+    pg.mixer.Sound.play(somTutorial)
+    pg.mixer.Sound.set_volume(somTutorial,0.6)
+    #Imagem de fundo
     background = pg.image.load("img/telaTutorial.png")
     back = pg.transform.scale(background, (800,525))
     screen.blit(back, [0, 0])
     pg.display.flip()
+    #Vẽ se clicou no botão
     naoclicou = True
     while (naoclicou):
         for event in pg.event.get():
@@ -410,7 +455,8 @@ def abrirtelatutorial():
                 naoclicou = False
             if event.type == pg.MOUSEBUTTONDOWN:
                 x, y= event.pos
-                if x > 341 and x < 453 and y > 435 and y < 494:
+                if x > 341 and x < 453 and y > 435 and y < 494: #Clicou no Voltar
                     abrirtelainicial()
-
-abrirtelainicial()
+                    
+                    
+abrirtelainicial() #Já começa no menu / tela inicial

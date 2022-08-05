@@ -1,4 +1,4 @@
-# HOP DONNOUT 🍩
+# HOP DONUT 🍩
 Jogo feito em python usando pygame
 
 ### Como jogar?
